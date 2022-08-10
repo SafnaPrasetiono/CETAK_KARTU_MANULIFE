@@ -1,14 +1,12 @@
-﻿using Aspose.Cells;
-using iTextSharp.text;
+﻿using iTextSharp.text;
 using iTextSharp.text.pdf;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.OleDb;
-using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using CETAK_KARTU_MANULIFE.Moduls;
 
 namespace CETAK_KARTU_MANULIFE
 {
@@ -17,8 +15,6 @@ namespace CETAK_KARTU_MANULIFE
         string dir_input = "";
         string tglcycle = "";
         int jmldok = 0;
-        string tcetak = "";
-        koneksi conn = new koneksi();
 
         public Form1()
         {
@@ -50,29 +46,6 @@ namespace CETAK_KARTU_MANULIFE
             }
         }
 
-        private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            try
-            {
-                LblPersen.Text = "0%";
-                int persen = (e.ProgressPercentage * 100) / jmldok;
-                progressBar.Style = ProgressBarStyle.Blocks;
-                progressBar.Maximum = Convert.ToInt32(jmldok);
-                progressBar.Value = e.ProgressPercentage;
-                LblPersen.Text = Convert.ToString(persen) + "%";
-            }
-
-            catch (Exception ex)
-            {
-                MessageBox.Show("" + ex);
-            }
-        }
-
-
-        void buatdir(string path)
-        {
-            Directory.CreateDirectory(path);
-        }
         void createfolder(string path)
         {
             if (!Directory.Exists(path))
@@ -80,32 +53,7 @@ namespace CETAK_KARTU_MANULIFE
                 Directory.CreateDirectory(path);
             }
         }
-        public DataTable read_excel(string xls, string namasheet)
-        {
-            OleDbConnection con = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + xls + ";Extended Properties='Excel 12.0 Xml;HDR=Yes;IMEX=1'");
-            OleDbCommand oleDbCmd = new OleDbCommand();
-            con.Open();
-            oleDbCmd.Connection = con;
-            DataTable dt = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-            DataTable dt2 = new DataTable();
-            //int jenis = 1;
-            for (int a = 0; a < dt.Rows.Count; a++)
-            {
-                if (!dt.Rows[a][2].ToString().ToUpper().Contains("FILTER") && dt.Rows[a][2].ToString().ToUpper().Contains(namasheet.ToUpper()))
-                {
-                    string firstExcelSheetName = dt.Rows[a][2].ToString();
-                    string query = "select * from [" + namasheet + "$]";
-                    OleDbDataAdapter data = new OleDbDataAdapter(query, con);
-                    //data.TableMappings.Add("TABLE", "dtExcel");
-                    data.TableMappings.Add("Table", "dtExcel");
-                    data.Fill(dt2);
-                }
-            }
-
-            Console.WriteLine(dt2);
-            return dt2;
-        }
-
+       
         private void dateTimePicker_CloseUp(object sender, EventArgs e)
         {
             TextData.Text = dateTimePicker.Value.ToString("yyyyMMdd");
@@ -126,13 +74,31 @@ namespace CETAK_KARTU_MANULIFE
             }
         }
 
-        private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             try
             {
-                string pathout = Directory.GetCurrentDirectory() + "\\OUTPUT\\" + tglcycle;
+                LblPersen.Text = "0%";
+                int persen = (e.ProgressPercentage * 100) / jmldok;
+                progressBar.Style = ProgressBarStyle.Blocks;
+                progressBar.Maximum = Convert.ToInt32(jmldok);
+                progressBar.Value = e.ProgressPercentage;
+                LblPersen.Text = Convert.ToString(persen) + "%";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+        }
+        private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            // Memanggil method moduld
+            ExcelModul mod = new ExcelModul();
+            try
+            {
+                string pathout = Directory.GetCurrentDirectory() + @"\OUTPUT\" + tglcycle;
                 DataTable dt = new DataTable();
-                dt = read_excel(TextData.Text, tglcycle + " Data Peserta Aktif ER");
+                dt = mod.ReadExcel(TextData.Text, tglcycle + " Data Peserta Aktif ER");
 
                 // Make methode directory for file csv and put the field first to csv file
                 string pathcsv = Directory.GetCurrentDirectory() + @"\SOFTCOPY\" + tglcycle;
@@ -167,7 +133,7 @@ namespace CETAK_KARTU_MANULIFE
                     string KodePelangganPeserta = dt.Rows[i][4].ToString().Trim('"');
 
                     // Memasukan data ke softcopy
-                    string inputDataCsv = (i + 1) + ";" + NamaPrusahaan + ";" + Nik + ";" + NamaPeserta + ";" + NoPesertaKerja + ";" + NoPesertaPeserta + ";" + KodePelangganKerja + ";" + KodePelangganPeserta +";1";
+                    string inputDataCsv = (i + 1) + ";" + NamaPrusahaan + ";" + Nik + ";" + NamaPeserta + ";" + NoPesertaKerja + ";" + NoPesertaPeserta + ";" + KodePelangganKerja + ";" + KodePelangganPeserta + ";1";
                     using (System.IO.StreamWriter fs = new System.IO.StreamWriter(pathfilecsv, true))
                     {
                         fs.WriteLine(inputDataCsv);
@@ -278,18 +244,19 @@ namespace CETAK_KARTU_MANULIFE
                     pcb.EndText();
                     doc.Close();
 
-                    
+
                 }
 
                 //sampai disini akhir koding
-                MessageBox.Show("Data Sudah Selesai Diproses");
+                MessageBox.Show("Data Sudah Selesai Diproses", "Konfirmasi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
-                MessageBox.Show("" + ex);
+                MessageBox.Show(ex.ToString(), "WARNING!!!");
+            } finally
+            {
+                backgroundWorker.ReportProgress(0);
             }
-
         }
 
     }

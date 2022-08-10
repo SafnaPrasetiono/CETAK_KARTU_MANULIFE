@@ -68,6 +68,18 @@ namespace CETAK_KARTU_MANULIFE
             }
         }
 
+
+        void buatdir(string path)
+        {
+            Directory.CreateDirectory(path);
+        }
+        void createfolder(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
         public DataTable read_excel(string xls, string namasheet)
         {
             OleDbConnection con = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + xls + ";Extended Properties='Excel 12.0 Xml;HDR=Yes;IMEX=1'");
@@ -92,18 +104,6 @@ namespace CETAK_KARTU_MANULIFE
 
             Console.WriteLine(dt2);
             return dt2;
-        }
-
-        void buatdir(string path)
-        {
-            Directory.CreateDirectory(path);
-        }
-        void createfolder(string path)
-        {
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
         }
 
         private void dateTimePicker_CloseUp(object sender, EventArgs e)
@@ -134,8 +134,19 @@ namespace CETAK_KARTU_MANULIFE
                 DataTable dt = new DataTable();
                 dt = read_excel(TextData.Text, tglcycle + " Data Peserta Aktif ER");
 
-                BaseFont bf = BaseFont.CreateFont(@"C:\Windows\Fonts\calibrib.ttf", BaseFont.WINANSI, true);
-                BaseFont bfbold = BaseFont.CreateFont(@"C:\Windows\Fonts\calibrib.ttf", BaseFont.WINANSI, true);
+                // Make methode directory for file csv and put the field first to csv file
+                string pathcsv = Directory.GetCurrentDirectory() + @"\SOFTCOPY\" + tglcycle;
+                createfolder(pathcsv);
+                string pathfilecsv = pathcsv + @"\DATA.CSV"; // make csv file
+                string fhd = "NO;NAMA_PRUSAHAAN;NO_INDUK_KARYAWAN(NIK);NAMA_PESERTA;NO_PESERTA(PEMBERI_KERJA);NO_PESERTA(PESERTA);KODE_PELANGGAN(PEMBERI_KERJA);KODE_PELANGGAN(PESERTA);JUM_HAL";
+                using (System.IO.StreamWriter fs = new System.IO.StreamWriter(pathfilecsv, false))
+                {
+                    fs.WriteLine(fhd);
+                    fs.Close();
+                }
+
+                //BaseFont bf = BaseFont.CreateFont(Directory.GetCurrentDirectory() + @"\FONTS\arialbd.ttf", BaseFont.WINANSI, true);
+                BaseFont bfbold = BaseFont.CreateFont(Directory.GetCurrentDirectory() + @"\FONTS\arialbd.ttf", BaseFont.WINANSI, true);
                 //BaseFont bfbarcode = BaseFont.CreateFont(Directory.GetCurrentDirectory() + @"\FONTS\C39P36DlTt.TTF", BaseFont.WINANSI, true);
                 Paragraph header1 = new Paragraph();
 
@@ -146,6 +157,7 @@ namespace CETAK_KARTU_MANULIFE
                     backgroundWorker.ReportProgress(i + 1);
                     string kdcyc = TextData.Text;
                     //int j = ((i - 1) % dt.Rows.Count) + 1;
+                    string NamaPrusahaan = dt.Rows[i][0].ToString().Trim('"');
                     string NamaPeserta = dt.Rows[i][5].ToString().Trim('"');
                     string Nik = dt.Rows[i][6].ToString().Trim('"');
                     string Tanggal = dt.Rows[i][7].ToString().Trim('"');
@@ -153,6 +165,14 @@ namespace CETAK_KARTU_MANULIFE
                     string NoPesertaPeserta = dt.Rows[i][2].ToString().Trim('"');
                     string KodePelangganKerja = dt.Rows[i][3].ToString().Trim('"');
                     string KodePelangganPeserta = dt.Rows[i][4].ToString().Trim('"');
+
+                    // Memasukan data ke softcopy
+                    string inputDataCsv = (i + 1) + ";" + NamaPrusahaan + ";" + Nik + ";" + NamaPeserta + ";" + NoPesertaKerja + ";" + NoPesertaPeserta + ";" + KodePelangganKerja + ";" + KodePelangganPeserta +";1";
+                    using (System.IO.StreamWriter fs = new System.IO.StreamWriter(pathfilecsv, true))
+                    {
+                        fs.WriteLine(inputDataCsv);
+                        fs.Close();
+                    }
 
                     string[] dateArray = Tanggal.Split('/');
                     string month = "Januari";
@@ -209,9 +229,9 @@ namespace CETAK_KARTU_MANULIFE
 
                     // Template PDF
                     PdfReader rlogo = new PdfReader("TEMPLATE/kartu.pdf");
-                    var doc = new Document(new iTextSharp.text.Rectangle(640, 210));
 
-                    //Document doc = new Document(new iTextSharp.text.Rectangle(242, 153));     //custom ukuran lembaran output nya
+                    //var doc = new Document(new iTextSharp.text.Rectangle(640, 210));    //ini untuk custom ukuran lembaran output nya
+                    var doc = new Document(rlogo.GetPageSize(1));                         //ini untuk custom ukuran sama seperti ukuran templatenya
                     var writeKartu = File.OpenWrite(pathcetak);
                     var instanceKartu = PdfWriter.GetInstance(doc, writeKartu);
 
@@ -226,7 +246,7 @@ namespace CETAK_KARTU_MANULIFE
                     int pos_y = 122;
                     int pos_x = 37;
                     //int pos_x2 = 270;
-                    int fontSize = 9;
+                    int fontSize = 8;
                     pcb.SetFontAndSize(bfbold, fontSize);
 
                     if (NamaPeserta != "")
@@ -255,10 +275,10 @@ namespace CETAK_KARTU_MANULIFE
                         pcb.ShowTextAligned(PdfContentByte.ALIGN_LEFT, KodePelangganKerja, pos_x, pos_y, 0);
                         pcb.ShowTextAligned(PdfContentByte.ALIGN_LEFT, KodePelangganPeserta, pos_x + 118, pos_y, 0);
                     }
-
-
                     pcb.EndText();
                     doc.Close();
+
+                    
                 }
 
                 //sampai disini akhir koding

@@ -10,13 +10,13 @@ using CETAK_KARTU_MANULIFE.Moduls;
 
 namespace CETAK_KARTU_MANULIFE
 {
-    public partial class Form1 : Form
+    public partial class Main : Form
     {
         string dir_input = "";
         string tglcycle = "";
         int jmldok = 0;
 
-        public Form1()
+        public Main()
         {
             InitializeComponent();
         }
@@ -69,7 +69,7 @@ namespace CETAK_KARTU_MANULIFE
             }
             else
             {
-                string[] excel = Directory.GetFiles(dir_input, "*.xlsx*");
+                string[] excel = Directory.GetFiles(dir_input, "*.xls*");
                 TextData.Text = excel[0];
             }
         }
@@ -103,7 +103,7 @@ namespace CETAK_KARTU_MANULIFE
                 // Make methode directory for file csv and put the field first to csv file
                 string pathcsv = Directory.GetCurrentDirectory() + @"\SOFTCOPY\" + tglcycle;
                 createfolder(pathcsv);
-                string pathfilecsv = pathcsv + @"\DATA.CSV"; // make csv file
+                string pathfilecsv = pathcsv + @"\Softcopy-"+ tglcycle +".csv"; // make csv file
                 string fhd = "NO;NAMA_PRUSAHAAN;NO_INDUK_KARYAWAN(NIK);NAMA_PESERTA;NO_PESERTA(PEMBERI_KERJA);NO_PESERTA(PESERTA);KODE_PELANGGAN(PEMBERI_KERJA);KODE_PELANGGAN(PESERTA);JUM_HAL";
                 using (System.IO.StreamWriter fs = new System.IO.StreamWriter(pathfilecsv, false))
                 {

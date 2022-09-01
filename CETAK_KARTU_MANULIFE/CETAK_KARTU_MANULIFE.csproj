@@ -73,8 +73,8 @@
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
-    <Compile Include="Koneksi.cs" />
     <Compile Include="Moduls\ExcelModul.cs" />
+    <Compile Include="Moduls\FormaterModul.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Main.resx">
@@ -109,8 +109,6 @@
   <ItemGroup>
     <Content Include="Manulife_Icon.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Icons\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
